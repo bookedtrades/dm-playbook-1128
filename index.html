@@ -1,0 +1,665 @@
+<title>DM Outbound Playbook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+<style>
+/* Layout: single reading column, phase headers with orange rail, numbered beats only where order matters (matches Setting Convo) */
+:root{
+  --bg:#0D0C0B; --surface:#161513; --surface-2:#1E1C19; --line:#2C2925;
+  --fg:#F3EFEA; --muted:#A39C93; --accent:#FE6C26; --accent-soft:rgba(254,108,38,.12);
+  --ok:#3FB37F; --warn:#E3A13B; --on-accent:#0D0C0B;
+  --display:"Bebas Neue",Impact,"Arial Narrow",sans-serif;
+  --label:"Barlow Condensed","Arial Narrow",sans-serif;
+  --body:"DM Sans",system-ui,-apple-system,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){
+  --bg:#FFFFFF; --surface:#F7F5F2; --surface-2:#EFEBE6; --line:#E2DDD6;
+  --fg:#0D0C0B; --muted:#5E5850; --accent:#E2561A; --accent-soft:rgba(254,108,38,.10);
+  --ok:#1F8A5B; --warn:#B57610; color-scheme:light}}
+:root[data-theme="light"]{
+  --bg:#FFFFFF; --surface:#F7F5F2; --surface-2:#EFEBE6; --line:#E2DDD6;
+  --fg:#0D0C0B; --muted:#5E5850; --accent:#E2561A; --accent-soft:rgba(254,108,38,.10);
+  --ok:#1F8A5B; --warn:#B57610; color-scheme:light}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6;padding-inline:16px;padding-block:40px 64px}
+.wrap{max-width:820px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:.01em;line-height:1;margin:0;text-wrap:balance}
+h1{font-size:clamp(48px,9vw,76px)}
+h2{font-size:34px}
+h3{font-size:24px}
+p{margin:0}
+.eyebrow{font-family:var(--label);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.badge{display:inline-block;align-self:flex-start;font-family:var(--label);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;border:1px solid var(--accent);color:var(--accent);background:var(--accent-soft);padding:4px 10px;border-radius:4px}
+.tag{display:inline-block;font-family:var(--label);font-weight:600;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);background:var(--surface-2);padding:2px 8px;border-radius:3px;white-space:nowrap}
+.lede{color:var(--muted);max-width:62ch;font-size:16px}
+.hero{display:flex;flex-direction:column;gap:14px}
+
+.phase{background:var(--surface);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:18px 20px;display:flex;flex-direction:column;gap:6px}
+.phase p{color:var(--muted)}
+
+.note{border:1px dashed var(--accent);border-radius:8px;padding:16px 18px;background:var(--accent-soft);display:flex;flex-direction:column;gap:8px}
+.note b{font-family:var(--label);letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--accent);margin-right:6px}
+.note ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.note li strong{color:var(--fg)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.card .when,.muted{color:var(--muted);font-size:14px}
+.card ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+
+.script{position:relative;background:var(--surface-2);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;padding:12px 14px;font-size:15px}
+.script p{padding-right:58px}
+.copy{position:absolute;top:8px;right:8px;font-family:var(--label);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:3px 8px;cursor:pointer}
+.copy:hover,.copy:focus-visible{color:var(--accent);border-color:var(--accent);outline:none}
+
+.steps{display:flex;flex-direction:column;gap:12px}
+.step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.step > .card{min-width:0}
+.num{background:var(--accent);color:var(--on-accent);font-family:var(--display);font-size:22px;border-radius:6px;height:36px;display:grid;place-items:center}
+.why{color:var(--muted);font-size:14px}
+
+.replies{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.reply{border-radius:8px;padding:14px;border:1px solid var(--line);background:var(--surface);display:flex;flex-direction:column;gap:8px;min-width:0}
+.reply .eyebrow{color:var(--fg)}
+.reply.hot{border-color:var(--ok)} .reply.hot .eyebrow{color:var(--ok)}
+.reply.mid{border-color:var(--warn)} .reply.mid .eyebrow{color:var(--warn)}
+.reply .says{color:var(--muted);font-size:14px;font-style:italic}
+
+.goals{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:14px}
+.goal{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:8px;padding:18px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.goal .listen{font-size:14px;color:var(--muted)}
+.q{font-family:var(--label);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:11px;color:var(--accent)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th{font-family:var(--label);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--accent);text-align:left;padding:12px 14px;background:var(--surface);border-bottom:1px solid var(--line)}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td:first-child{color:var(--muted);font-style:italic}
+td strong{color:var(--fg)}
+td.todo{color:var(--warn);font-family:var(--label);font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:12px;white-space:nowrap}
+table.plain td:first-child{font-style:normal}
+
+/* iMessage-style example */
+.phone{--im-bg:#000000;--im-bar:#1C1C1E;--im-hair:#38383A;--im-them:#26252A;--im-them-fg:#FFFFFF;--im-you:#0B84FE;--im-meta:#8E8E93;--im-avatar:#6B6B70;
+  width:100%;max-width:400px;align-self:center;background:var(--im-bg);border:1px solid var(--line);border-radius:28px;overflow:hidden;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.3;letter-spacing:-.01em}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .phone{--im-bg:#FFFFFF;--im-bar:#F6F6F6;--im-hair:#D8D8DC;--im-them:#E9E9EB;--im-them-fg:#000000;--im-you:#007AFF;--im-meta:#8E8E93;--im-avatar:#A4A4AA}}
+:root[data-theme="light"] .phone{--im-bg:#FFFFFF;--im-bar:#F6F6F6;--im-hair:#D8D8DC;--im-them:#E9E9EB;--im-them-fg:#000000;--im-you:#007AFF;--im-meta:#8E8E93;--im-avatar:#A4A4AA}
+.im-head{background:var(--im-bar);border-bottom:1px solid var(--im-hair);display:grid;grid-template-columns:60px 1fr 60px;align-items:center;padding:10px 12px 8px}
+.im-back{color:var(--im-you);font-size:28px;line-height:1;padding-left:2px}
+.im-contact{display:flex;flex-direction:column;align-items:center;gap:4px}
+.im-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(180deg,var(--im-avatar),color-mix(in srgb,var(--im-avatar) 70%,#000));color:#FFFFFF;display:grid;place-items:center;font-size:18px;font-weight:600}
+.im-name{font-size:12px;color:var(--im-them-fg)}
+.im-thread{display:flex;flex-direction:column;padding:12px 14px 16px;gap:2px}
+.im-time{align-self:center;font-size:11px;color:var(--im-meta);margin:12px 0 6px;font-weight:500}
+.im-time b{font-weight:600}
+.bubble{position:relative;max-width:75%;padding:7px 12px 8px;border-radius:18px;word-wrap:break-word}
+.bubble.them{align-self:flex-start;background:var(--im-them);color:var(--im-them-fg)}
+.bubble.you{align-self:flex-end;background:var(--im-you);color:#FFFFFF}
+.bubble.gap{margin-top:8px}
+.bubble.tail.you::before{content:"";position:absolute;bottom:0;right:-7px;width:20px;height:18px;background:var(--im-you);border-bottom-left-radius:16px 14px}
+.bubble.tail.you::after{content:"";position:absolute;bottom:0;right:-26px;width:26px;height:20px;background:var(--im-bg);border-bottom-left-radius:10px}
+.bubble.tail.them::before{content:"";position:absolute;bottom:0;left:-7px;width:20px;height:18px;background:var(--im-them);border-bottom-right-radius:16px 14px}
+.bubble.tail.them::after{content:"";position:absolute;bottom:0;left:-26px;width:26px;height:20px;background:var(--im-bg);border-bottom-right-radius:10px}
+.bubble span{position:relative;z-index:1}
+.im-status{align-self:flex-end;font-size:11px;color:var(--im-meta);margin-top:3px;font-weight:500}
+.im-input{border-top:1px solid var(--im-hair);padding:8px 12px 12px;display:flex;align-items:center;gap:10px}
+.im-plus{width:30px;height:30px;border-radius:50%;background:var(--im-them);color:var(--im-meta);display:grid;place-items:center;font-size:20px;flex:none}
+.im-field{flex:1;border:1px solid var(--im-hair);border-radius:18px;padding:6px 14px;color:var(--im-meta);font-size:15px}
+.beat-legend{align-self:center;font-family:var(--label);font-weight:600;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:center;max-width:400px}
+
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--label);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px}
+.flow span{background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:6px 10px}
+.flow span.end{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.flow i{color:var(--accent);font-style:normal}
+
+ul.log{margin:0;padding-left:18px;color:var(--muted)}
+footer{color:var(--muted);font-size:13px;text-align:center;padding-top:8px}
+@media (max-width:480px){.bubble{max-width:82%}.step{grid-template-columns:36px 1fr;gap:10px}}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <span class="badge">Booked Trades · Internal · DM Playbook</span>
+  <h1>DM Outbound Playbook</h1>
+  <p class="lede">Your job is to start conversations in DMs and turn them into booked calls with Will. This is a framework, not a script. Know the goal of each step, then write it in your own words using these examples.</p>
+  <div class="flow"><span>Open</span><i>→</i><span>Goal</span><i>→</i><span>Gap</span><i>→</i><span>Bridge</span><i>→</i><span>Hook</span><i>→</i><span class="end">Book + feed proof</span></div>
+</header>
+
+<div class="note">
+  <span><b>Golden rules</b></span>
+  <ol>
+    <li><strong>You're Will.</strong> Introduce yourself as Will from Booked Trades in every DM. It keeps things simple, since Will takes the call.</li>
+    <li><strong>Never end on a statement.</strong> Every message finishes with a question. If you make a point, send the question as its own text straight after.</li>
+    <li><strong>One question per message.</strong> Ask one thing, then wait for the reply. Never stack two asks in one bubble.</li>
+    <li><strong>Acknowledge, then ask.</strong> "Gotcha", "Totally understand", "Cool", then the next question. Use their own words back to them.</li>
+    <li><strong>Easy questions only.</strong> Short questions they can answer in a few words from the job site.</li>
+    <li><strong>Short and casual.</strong> Like a text to a mate, not an email. One or two lines per message.</li>
+    <li><strong>The gap matters most.</strong> If they never admit a gap between where they are and where they want to be, there's no reason to get on a call.</li>
+    <li><strong>No price in DMs.</strong> We haven't built the value yet.</li>
+    <li><strong>You drive.</strong> They answer, you steer to the next step.</li>
+    <li><strong>Always aim for the booking, then feed proof straight away.</strong></li>
+    <li><strong>Say "home improvement and construction businesses"</strong> when describing who we work with, not "trades".</li>
+    <li><strong>Don't fake the slang.</strong> Casual and friendly is good. Forced "mate" and "legend" is not.</li>
+  </ol>
+</div>
+
+<section class="phase">
+  <span class="eyebrow">The thinking</span>
+  <h2>Why We Do It This Way</h2>
+  <p>The best calls are ones where the person shows up already knowing what we do, how we do it, roughly what it costs, and that it's worked for someone like them. Then the call is all about their business, not about convincing them. Your DMs are the first step in getting them there: find their goal and gap, book the call, then feed them proof that matches what they told you. Every case study, Instagram post and doc they read before the call makes it easier.</p>
+</section>
+
+<!-- RAPPORT -->
+<section class="phase">
+  <span class="eyebrow">All the way through</span>
+  <h2>Build Rapport</h2>
+  <p>People book calls with people they like. Sound like a real person who's interested in their business, not a bot working a script. Every step below has rapport lines built in. These are the habits behind them.</p>
+</section>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>The habits</h3></div>
+    <ul>
+      <li><strong>Introduce yourself as Will.</strong> A name and a "nice to meet you" makes it a conversation, not a sequence.</li>
+      <li><strong>Mention what they did.</strong> The guide they grabbed, the form they filled in, the job they posted. It shows you're paying attention.</li>
+      <li><strong>Back them up after every answer.</strong> A quick "solid goal man" or "nice, good base to build off" before the next question.</li>
+      <li><strong>Normalise their problems.</strong> "Super common", "all part of the growing pains". Nobody likes feeling like they're doing it wrong.</li>
+      <li><strong>Soften your questions.</strong> "Out of curiosity", "quick one", "for context".</li>
+      <li><strong>Match their energy.</strong> Short replies get short messages. If they open up, you can too.</li>
+      <li><strong>Emoji sparingly.</strong> A 👍 here and there is friendly. More than that looks like spam.</li>
+    </ul>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Phrase bank</h3><span class="tag">Mix these in</span></div>
+    <div class="table-wrap">
+    <table class="plain">
+      <thead><tr><th>Use for</th><th>Say</th></tr></thead>
+      <tbody>
+        <tr><td>Softening a question</td><td>"Out of curiosity..." · "Quick one..." · "For context..."</td></tr>
+        <tr><td>Backing up a goal</td><td>"Solid goal man, it's way easier to scale things up from there too"</td></tr>
+        <tr><td>Backing up where they're at</td><td>"Nice man, that's a good base to build off"</td></tr>
+        <tr><td>Normalising a problem</td><td>"Makes sense, super common man. All part of the growing pains realistically"</td></tr>
+        <tr><td>Acknowledging</td><td>"Yeah got it" · "Gotcha" · "Fair enough" · "Love to hear it"</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </article>
+</div>
+
+<!-- STEP 0 -->
+<section class="phase">
+  <span class="eyebrow">Step 0 · Before any outbound</span>
+  <h2>Postcode Check</h2>
+  <p>Run every prospect's postcode through the outbound tool first. We only work with one business per service per area, so once a client has an area we don't prospect their competitors.</p>
+</section>
+
+<div class="card">
+  <div class="card-head"><h3>If there's a clash</h3><span class="tag">Waitlist</span></div>
+  <p class="when">If they've come to us anyway, it's not a bad thing. Explain the one-per-area model, send something helpful, and offer the waitlist.</p>
+  <div class="script"><p>"Hey mate, appreciate you reaching out. Just a heads up, we only work with one business per service in each area so we can really go all in for our guys, and we've already got someone locked in near you. Happy to send through some info on what you'd want to have in place either way. And if the spot ever opens up, want me to pop you on the waitlist?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<div class="card">
+  <h3>Who We Want To Book</h3>
+  <p class="when">Pick this up naturally through the conversation, not as an interrogation. If they're clearly not a fit, don't book them in.</p>
+  <div class="table-wrap">
+  <table class="plain">
+    <thead><tr><th>Good fit</th><th>Not a fit</th></tr></thead>
+    <tbody>
+      <tr><td>Doing roughly $1M to $3M a year</td><td>Small one-man bands. They miss quotes and pause once word of mouth picks up</td></tr>
+      <tr><td>Average job of $15k or more</td><td>Average job under $15k. Too many jobs needed to get a good return</td></tr>
+      <tr><td>Fast-decision work: driveways, decking and pergolas, retaining walls, bathroom repairs, high-end fencing and gates, flooring, roofing</td><td>Slow, design-heavy work with lots of back and forth before a job starts</td></tr>
+      <tr><td>Driven, wants to grow, open to a long-term partnership</td><td>Just cruising, not driven</td></tr>
+      <tr><td>Relied on word of mouth or had ads not work, now wants a reliable system</td><td>Known for poor quality work or not paying bills</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<!-- STEP 1 -->
+<section class="phase">
+  <span class="eyebrow">Step 1 · Open</span>
+  <h2>Pick Your Opener</h2>
+  <p>The goal is a quick reply and a conversation started. Pick the opener that fits the lead.</p>
+</section>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>New Enquiry</h3><span class="tag">Came through a funnel</span></div>
+    <p class="when">Introduce yourself, mention what they grabbed, then ask about the work. Match it to the funnel they came through.</p>
+    <div class="script"><p>"Hey [name], my name's Will, nice to meet you 👍 Saw you grabbed [the guide] earlier. Are you a concreter, or what's your trade?"</p><button class="copy" type="button">Copy</button></div>
+    <div class="script"><p>"Hey, just got your inquiry, thanks for that! Curious, what sort of concreting work do you guys do?"</p><button class="copy" type="button">Copy</button></div>
+    <div class="script"><p>"Hey, just got your inquiry, thanks for that! What sort of work are you looking for exactly?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Cold Outreach</h3><span class="tag">We found them</span></div>
+    <p class="when">Open on something real from their page, then a yes/no question.</p>
+    <div class="script"><p>"G'day [name], saw that [job / pour / deck] you posted, looks mint. Quick one, are you guys chasing more work at the moment, or pretty well booked up?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>Keep the rhythm going</h3><span class="tag">New leads</span></div>
+  <p class="when">They'll usually reply short. Clarify what they're after, find where they are, then tell them we have availability. The availability line is a statement, so the goal question goes straight after as its own text.</p>
+  <div class="script"><p>"Gotcha, totally understand. Whereabouts are you guys based?"</p><button class="copy" type="button">Copy</button></div>
+  <div class="script"><p>"Awesome. We're working with concreters across Aus at the moment, but we actually have availability in your area."</p><button class="copy" type="button">Copy</button></div>
+  <div class="script"><p>"So what's the goal for you guys at the moment?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<section class="phase">
+  <span class="eyebrow">Step 1 · Open</span>
+  <h2>Reactivation Openers</h2>
+  <p>For old leads, quiet leads and anyone sitting in nurture. Lead with a result or a reason, finish with one easy question. Never a naked "just checking in".</p>
+</section>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>Booked Out</h3><span class="tag">Social proof</span></div>
+    <p class="when">Best for leads who went cold on "not sure it works". Shows other clients are flat out.</p>
+    <div class="script"><p>"Hey [name], we just had 3 more clients pause their ads because they're booked out 12 weeks! Thought I'd see how you guys are going for work, have you got capacity to take on more at the moment?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Spot Open</h3><span class="tag">Area scarcity</span></div>
+    <p class="when">Best for leads who were keen but the timing was off. One client per area makes it real.</p>
+    <div class="script"><p>"Quick one [name], how did you go with getting more consistent work? Thought I'd follow up as we've currently got an opening in [area]!"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Similar Win</h3><span class="tag">Matched case</span></div>
+    <p class="when">Best when you've got a case that mirrors their business. Swap the trade, city and number to match.</p>
+    <div class="script"><p>"[name], how's it going man! We just got one of our concreters in Melbourne over $250k in won jobs in two months! His business is actually pretty similar to yours, so I thought I'd reach out and see if you were still looking for more work too?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Season Ahead</h3><span class="tag">Timing</span></div>
+    <p class="when">Best before a busy season or the new year. Gets them thinking about the pipeline, not today.</p>
+    <div class="script"><p>"G'day [name], most of the guys we work with are locking in their work for [summer / the new year] right now. How's the books looking for you over the next couple of months?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+</div>
+
+<section class="phase">
+  <span class="eyebrow">Step 1 · Read the reply</span>
+  <h2>Where They Land</h2>
+  <p>Whatever they say back tells you which way to steer. Every path ends at the goal question.</p>
+</section>
+
+<div class="replies">
+  <div class="reply hot">
+    <span class="eyebrow">Keen / bit quiet</span>
+    <p class="says">"Could always use more" · "Bit slow at the moment"</p>
+    <div class="script"><p>"Righto, makes sense. So what's the goal for you guys at the moment?"</p><button class="copy" type="button">Copy</button></div>
+  </div>
+  <div class="reply mid">
+    <span class="eyebrow">Booked up</span>
+    <p class="says">"Flat out mate" · "Booked till Christmas"</p>
+    <div class="script"><p>"Love to hear it. Is that the kind of work you want more of, or more just whatever's been coming through?"</p><button class="copy" type="button">Copy</button></div>
+    <p class="why">Busy isn't a no. It usually opens the expansion goal.</p>
+  </div>
+  <div class="reply">
+    <span class="eyebrow">No reply</span>
+    <p class="says">Seen, nothing back after 2 to 3 days</p>
+    <div class="script"><p>"No stress if you're flat out [name], just shout if more work's on the radar for [month]."</p><button class="copy" type="button">Copy</button></div>
+    <p class="why">One bump, then see Follow-Up below.</p>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<section class="phase">
+  <span class="eyebrow">Step 2 · Goal</span>
+  <h2>Find Their Goal</h2>
+  <p>Nearly every answer lands in one of two goals. Consistency is the most common. Expansion is our ideal client.</p>
+</section>
+
+<div class="card">
+  <div class="card-head"><h3>Ask the goal</h3><span class="tag">Pick one</span></div>
+  <div class="script"><p>"So what's the goal for you guys at the moment?"</p><button class="copy" type="button">Copy</button></div>
+  <div class="script"><p>"Out of curiosity, what's the main thing you're trying to fix right now? Is it more about staying consistently booked, or getting better quality jobs coming through?"</p><button class="copy" type="button">Copy</button></div>
+  <p class="why">Then dig into what they're aiming for:</p>
+  <div class="script"><p>"Yeah sweet. Have you guys got a goal you're shooting for this year?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<div class="goals">
+  <article class="goal">
+    <span class="eyebrow">Most common</span>
+    <h3>Consistency</h3>
+    <p class="listen">Listen for: work is up and down, not working to capacity, feast or famine, word of mouth only.</p>
+  </article>
+  <article class="goal">
+    <span class="eyebrow">Our ideal client</span>
+    <h3>Expansion</h3>
+    <p class="listen">Listen for: already busy and want to grow. Hiring more staff, a second team, or moving into a new niche, like commercial into residential.</p>
+  </article>
+</div>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>If they say "both"</h3><span class="tag">Second most common</span></div>
+    <p class="when">They want to expand but don't have the consistency to get there yet. Consistency comes first, then confirm the expansion goal.</p>
+    <div class="script"><p>"Haha cool. Obviously consistency comes first, but once we lock that in, you guys want to expand the business, right?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>If they want the right jobs</h3><span class="tag">Treat as expansion</span></div>
+    <p class="when">Busy, but want better work: bigger jobs, fewer tyre kickers, or a specific type of job.</p>
+    <div class="script"><p>"What type of jobs do you actually want more of?"</p><button class="copy" type="button">Copy</button></div>
+    <div class="script"><p>"Roughly how much of your work right now is that kind of job?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+</div>
+
+<!-- STEP 3 -->
+<section class="phase">
+  <span class="eyebrow">Step 3 · Gap · The step that matters most</span>
+  <h2>How Much Work, And What's Stopping Them</h2>
+  <p>Once they've said the gap in their own words, they want it fixed and the bridge makes sense. Don't rush it. What they tell you here also decides which proof you send after booking.</p>
+</section>
+
+<div class="steps">
+  <div class="step"><div class="num">A</div>
+    <div class="card">
+      <h3>How much work they need</h3>
+      <div class="script"><p>"Obviously it can vary, but roughly how many jobs are you guys doing a month at the moment? And how many would you like to be doing?"</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">If they say "it depends on the size of the job", agree and give them an example to react to:</p>
+      <div class="script"><p>"Of course it does. Just as a rule of thumb though, if we could bring in an extra say 4 of the right jobs a month in the beginning, would that help you guys? Or are you looking for more than that? We can help either way, just so I understand."</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">You want them to name the gap, e.g. "honestly an extra 1 to 2 jobs a week would do us". Back them up before you move on:</p>
+      <div class="script"><p>"Solid goal man, it's way easier to really scale things up from there too."</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">If they gave a revenue goal instead of jobs, ask where they're at now, then back that up too:</p>
+      <div class="script"><p>"For context, where are you sitting around now?"</p><button class="copy" type="button">Copy</button></div>
+      <div class="script"><p>"Nice man, that's a good base to build off. So what do you think the business needs most right now to hit [their goal]? More or better leads? More time for sales?"</p><button class="copy" type="button">Copy</button></div>
+    </div>
+  </div>
+  <div class="step"><div class="num">B</div>
+    <div class="card">
+      <h3>What's stopping them</h3>
+      <div class="script"><p>"Cool, so does most of your work come from word of mouth at the moment?"</p><button class="copy" type="button">Copy</button></div>
+      <div class="script"><p>"Have you been advertising at all?"</p><button class="copy" type="button">Copy</button></div>
+      <div class="script"><p>"What's stopping you getting there at the moment? Is it more on the sales side, or just not enough qualified leads coming your way?"</p><button class="copy" type="button">Copy</button></div>
+      <div class="script"><p>"Are you getting leads coming in but just too short on time to chase them?"</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">Common gaps: relying on word of mouth, not enough qualified leads, no time to follow up, trouble converting quotes, tried ads before and it didn't work.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>The Wedge</h3><span class="tag">Backup questions</span></div>
+  <p class="when">Use these if their answer is vague. Let the answer sit. This is usually where the money leaks.</p>
+  <div class="script"><p>"And when an enquiry comes in, who chases it up, and how quick?"</p><button class="copy" type="button">Copy</button></div>
+  <div class="script"><p>"Are you working with anyone on that at the moment? How's it going?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>The Surface-Level Reframe</h3><span class="tag">When they say "more leads"</span></div>
+  <p class="when">Most guys think the problem is leads. Show them it usually runs deeper, then ask a question they'll say yes to.</p>
+  <div class="script"><p>"Yeah got it. Most of the time the lead problem is just surface level. It's usually a gap somewhere between enquiry, first conversation, quote and following up."</p><button class="copy" type="button">Copy</button></div>
+  <div class="script"><p>"Have you noticed the quoting slows down when work gets busy?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<!-- STEP 4 -->
+<section class="phase">
+  <span class="eyebrow">Step 4 · Bridge</span>
+  <h2>Link Their Gap To Our Service</h2>
+  <p>Show them their gap is normal and is exactly what we fix. Link their specific gap to the part of our service that solves it.</p>
+</section>
+
+<div class="script"><p>"Makes sense, super common man. And all part of the growing pains realistically."</p><button class="copy" type="button">Copy</button></div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>Their gap</th><th>How we bridge it</th></tr></thead>
+  <tbody>
+    <tr><td>Not enough qualified leads</td><td>We don't just get leads, we get <strong>pre-qualified quotes booked into the calendar</strong>, so they just show up to quotes every week</td></tr>
+    <tr><td>No time to follow up</td><td>We <strong>call the leads and handle all the admin</strong>, so time-poor guys keep winning consistently</td></tr>
+    <tr><td>Relying on word of mouth</td><td>Word of mouth is great but you can't control it. We give them a <strong>steady flow they can plan around</strong></td></tr>
+    <tr><td>Tried ads before, didn't work</td><td>Most guys get leads and no booked quotes. We <strong>pre-qualify and book them</strong>, so it's quotes, not tyre kickers</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>Not enough leads</h3></div>
+    <div class="script"><p>"Yep, totally hear you, that can be one of the biggest bottlenecks. That's exactly why we focus not on getting leads for our partners, but on getting pre-qualified quotes booked into the calendar, so you've just got quotes to show up to every week."</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>No time to follow up</h3></div>
+    <div class="script"><p>"Yeah we found that a few years ago. That's why we shifted to our service model where we call the leads and handle all the admin that comes with this sort of marketing, so our guys who are time poor can keep winning consistently."</p><button class="copy" type="button">Copy</button></div>
+  </article>
+</div>
+
+<!-- STEP 5 -->
+<section class="phase">
+  <span class="eyebrow">Step 5 · Hook</span>
+  <h2>Tie It Back To Their Goal</h2>
+  <p>Formula: "If we could [achieve their goal] and [remove their gap], is that something you'd be keen to look at?" Use their own words. If they say yes, go straight to booking.</p>
+</section>
+
+<div class="grid">
+  <article class="card">
+    <div class="card-head"><h3>Consistency</h3></div>
+    <div class="script"><p>"If we could get a steady flow of qualified quotes coming in every week and take the chasing, follow-ups and time wasters off your plate, is that something you'd want to look at?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>New niche</h3></div>
+    <div class="script"><p>"If we could help you get into that residential concreting space you're after, and take a whole lot of work off your plate in the meantime, is that something you'd be keen to look at?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+  <article class="card">
+    <div class="card-head"><h3>Second team</h3></div>
+    <div class="script"><p>"If we could help you grow that second team by bringing in enough qualified quotes that you've got the certainty to support the new guys, would that help you get there quicker, do you think?"</p><button class="copy" type="button">Copy</button></div>
+  </article>
+</div>
+
+<!-- STEP 6 -->
+<section class="phase">
+  <span class="eyebrow">Step 6 · Book it</span>
+  <h2>Doc, Then Call</h2>
+  <p>Move them off text and toward a call with Will. Tell them about the doc, then lock in a time. Offer two specific times, never "whenever suits".</p>
+</section>
+
+<div class="steps">
+  <div class="step"><div class="num">1</div>
+    <div class="card">
+      <h3>Pitch the doc and the call</h3>
+      <div class="script"><p>"Sweet. Look, I don't mind texting, but best thing from here is to send you a doc that lays out exactly how we do this. It's got examples of what we're doing for partners with really similar businesses to yours, and gives you an idea of pricing depending on what you need."</p><button class="copy" type="button">Copy</button></div>
+      <div class="script"><p>"I'll send that through for a read, then we'll jump on a quick call. Does [day] at [time] or [day] at [time] suit better?"</p><button class="copy" type="button">Copy</button></div>
+    </div>
+  </div>
+  <div class="step"><div class="num">2</div>
+    <div class="card">
+      <h3>If they stall</h3>
+      <div class="script"><p>"All good, what's your week looking like? Mornings before site or arvo after knock off are usually easiest."</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">Still vague? Lock a callback time instead and send the doc anyway.</p>
+    </div>
+  </div>
+  <div class="step"><div class="num">3</div>
+    <div class="card">
+      <h3>Send the doc, stress reading it</h3>
+      <div class="script"><p>"Here's that doc: [pre-call doc link]. Super important you give it a read before the call. It means we can spend the time diving into your business and how we'd tailor things to you, rather than going over our side of things."</p><button class="copy" type="button">Copy</button></div>
+    </div>
+  </div>
+  <div class="step"><div class="num">4</div>
+    <div class="card">
+      <h3>Feed proof, straight away</h3>
+      <div class="script"><p>"Locked in for [day]. Before then, have a look at this, a [trade] who was right where you're at and did [result]. That's the kind of thing we're talking about."</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">Send it the second the convo ends. One case matched to what they told you, not a dump. Use the table below.</p>
+    </div>
+  </div>
+  <div class="step"><div class="num">5</div>
+    <div class="card">
+      <h3>Let them know who's calling</h3>
+      <div class="script"><p>"Perfect, I'll give you a ring then. I'll flick you a text from my phone beforehand so you know who's calling."</p><button class="copy" type="button">Copy</button></div>
+      <p class="why">Tradies don't answer unknown numbers on site. A heads-up text means the call actually connects.</p>
+    </div>
+  </div>
+</div>
+
+<section class="phase">
+  <span class="eyebrow">Proof-feed match</span>
+  <h2>What To Send</h2>
+  <p>Match by trade first, then by what they said.</p>
+</section>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>They told you</th><th>You send</th><th>Link</th></tr></thead>
+  <tbody>
+    <tr><td>"It's up and down / feast or famine"</td><td><strong>Mornington Peninsula</strong>, $250k in 6 weeks, leads day one</td><td class="todo">Will to add</td></tr>
+    <tr><td>"Word of mouth only, never run ads"</td><td><strong>Melbourne concreter (video)</strong>, $400,800 in 8 weeks, no ad experience</td><td class="todo">Will to add</td></tr>
+    <tr><td>"Want bigger jobs / sick of the small stuff"</td><td><strong>Brisbane carpenter</strong> or the closest trade match, show the job values</td><td class="todo">Will to add</td></tr>
+    <tr><td>"Want another crew / scale up"</td><td><strong>Cannington, Tony &amp; Fung</strong>, solo to two crews, off the tools, 18 months</td><td class="todo">Will to add</td></tr>
+    <tr><td>"Tried ads or a lead company, didn't work"</td><td><strong>The follow-up difference + Melbourne</strong>, show what we do differently, then the proof</td><td class="todo">Will to add</td></tr>
+    <tr><td>"I'm regional, will it work here"</td><td><strong>Gippsland concreter</strong>, $154,159 across two months</td><td class="todo">Will to add</td></tr>
+    <tr><td>"I'm a decker / chippy, not a concreter"</td><td><strong>Brisbane carpenter</strong>, $371,550 in new decking jobs</td><td class="todo">Will to add</td></tr>
+    <tr><td>"Not sure it'll pay for itself"</td><td><strong>Perth concreter</strong>, $164,342 in the first month</td><td class="todo">Will to add</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>Day Before The Call</h3><span class="tag">Will to confirm who sends</span></div>
+  <div class="script"><p>"G'day [name], all set for tomorrow at [time]? Did you get a chance to have a proper look through that doc? Any questions you want covered while we're on?"</p><button class="copy" type="button">Copy</button></div>
+  <p class="why">The reply tells you how keen they are: quick and keen, lukewarm, or slow and cold. Note it for Will. If they've gone cold, don't chase hard. Offer an easy reschedule instead.</p>
+</div>
+
+<!-- OFF SCRIPT -->
+<section class="phase">
+  <span class="eyebrow">Off script</span>
+  <h2>Price And Objections</h2>
+  <p>An objection isn't a no, it's just the next problem to solve. Find out what's really behind it, send something that answers that specific worry, then ask an easy question to keep moving. Keep it soft. Pushy closing lines come across badly in DMs.</p>
+</section>
+
+<div class="card">
+  <div class="card-head"><h3>"What's the price?"</h3><span class="tag">Any time</span></div>
+  <p class="when">Never give price in DMs. If they keep pushing, point to the doc, which gives an idea of pricing, and move to booking.</p>
+  <div class="script"><p>"Can definitely discuss price, just need to know exactly what you guys need first so we can get some clarity on it. What sort of work are you looking for more of?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<div class="table-wrap">
+<table>
+  <thead><tr><th>They say</th><th>Usually means</th><th>Reply</th></tr></thead>
+  <tbody>
+    <tr><td>"What do you guys even do?"</td><td>Want to know us first</td><td>Send the pinned "how it works" post: "Here's exactly how it works. What sort of work are you after at the moment?"</td></tr>
+    <tr><td>"Does this actually work?"</td><td>Want proof</td><td>Send the pinned case study: "Here's one of our guys with a similar business. Where are you at with work at the moment?"</td></tr>
+    <tr><td>"Already got someone doing ads"</td><td>Might not be getting results</td><td>"All good. How are you finding it? Are the leads turning into booked quotes?"</td></tr>
+    <tr><td>"Tried ads before, didn't work"</td><td>Got burnt on leads</td><td>"Yeah we hear that a lot. Usually it's leads with no follow-up. Was it the quality of the leads or the time to chase them?"</td></tr>
+    <tr><td>"Too busy right now"</td><td>Possibly expansion</td><td>"Love that. Are you looking to grow the team, or happy where you're at?"</td></tr>
+    <tr><td>"Just send me some info"</td><td>Often a soft no</td><td>Send a relevant Instagram post, then: "What's the main thing you'd want to know?"</td></tr>
+    <tr><td>"Not interested"</td><td>Not now</td><td>"No worries at all. Just curious, is work pretty steady at the moment?" If still no, leave it and move to nurture.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="card">
+  <div class="card-head"><h3>Instagram Resources</h3><span class="tag">Send, then ask</span></div>
+  <p class="when">Our posts make us look legit, and they get people scrolling our content before the call. Send the resource, then keep the conversation going with a question.</p>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>When they...</th><th>Send</th><th>Link</th></tr></thead>
+    <tbody>
+      <tr><td>Want to know what we do</td><td>Pinned post: how it works</td><td class="todo">Will to add</td></tr>
+      <tr><td>Doubt it works</td><td>Pinned post: case study</td><td class="todo">Will to add</td></tr>
+      <tr><td>Want proof for their trade</td><td>Recent results for similar businesses</td><td class="todo">Will to add</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="script"><p>"Here's some of our recent results for concreters just like yourself. Where are you guys at with work at the moment?"</p><button class="copy" type="button">Copy</button></div>
+</div>
+
+<!-- FOLLOW UP -->
+<section class="phase">
+  <span class="eyebrow">Follow-up</span>
+  <h2>When They Go Quiet</h2>
+  <p>Keep touching base until the first conversation starts, but never with a naked "just checking in". If they go quiet mid-conversation, follow up on the last question you asked, not with a new pitch.</p>
+</section>
+
+<div class="steps">
+  <div class="step"><div class="num">1</div>
+    <div class="card"><h3>No reply after 2 to 3 days</h3>
+      <div class="script"><p>"No stress if you're flat out [name], just shout if more work's on the radar for [month]."</p><button class="copy" type="button">Copy</button></div>
+    </div></div>
+  <div class="step"><div class="num">2</div>
+    <div class="card"><h3>Still nothing</h3><p class="why">Flag the lead to Will for a call.</p></div></div>
+  <div class="step"><div class="num">3</div>
+    <div class="card"><h3>Still nothing after that</h3><p class="why">Back to nurture. Next round, use a different reactivation opener.</p></div></div>
+</div>
+
+<!-- EXAMPLE -->
+<section class="phase">
+  <span class="eyebrow">Example</span>
+  <h2>A Full Conversation</h2>
+  <p>How a smooth one flows from open to booked. Real ones won't be this clean, but the steps stay the same.</p>
+</section>
+
+<p class="beat-legend">The grey timestamps mark each step of the framework</p>
+
+<div class="phone" role="img" aria-label="Example DM conversation from open to booked call">
+  <div class="im-head">
+    <span class="im-back" aria-hidden="true">‹</span>
+    <div class="im-contact"><div class="im-avatar" aria-hidden="true">D</div><span class="im-name">Dave · Concreting</span></div>
+    <span></span>
+  </div>
+  <div class="im-thread">
+    <span class="im-time"><b>Open</b> · Today 7:42 AM</span>
+    <div class="bubble you"><span>Hey Dave, my name's Will, nice to meet you 👍</span></div>
+    <div class="bubble you tail" style="margin-top:2px"><span>Saw you grabbed the driveway guide earlier. What sort of concreting work do you guys do?</span></div>
+    <div class="bubble them tail gap"><span>Driveways and patios mostly</span></div>
+    <div class="bubble you tail gap"><span>Gotcha, nice. Whereabouts are you guys based?</span></div>
+    <div class="bubble them tail gap"><span>Western Sydney</span></div>
+    <div class="bubble you gap"><span>Awesome, good spot for it. We're working with concreters across Aus at the moment but we actually have availability in your area.</span></div>
+
+    <span class="im-time"><b>Goal</b> · 7:44 AM</span>
+    <div class="bubble you tail"><span>Out of curiosity, what's the main thing you're trying to fix right now? Staying consistently booked, or getting better quality jobs coming through?</span></div>
+    <div class="bubble them tail gap"><span>Consistent work mainly, it's up and down</span></div>
+
+    <span class="im-time"><b>Gap</b> · 7:51 AM</span>
+    <div class="bubble you tail"><span>Yeah fair enough. Obviously it varies, but roughly how many jobs are you doing a month, and how many would you like to be doing?</span></div>
+    <div class="bubble them tail gap"><span>Maybe 6, would love 10 to 12</span></div>
+    <div class="bubble you"><span>Solid goal man, that's very doable</span></div>
+    <div class="bubble you tail" style="margin-top:2px"><span>Does most of your work come from word of mouth at the moment?</span></div>
+    <div class="bubble them tail gap"><span>Yeah mostly, tried Facebook ads once but got heaps of tyre kickers</span></div>
+
+    <span class="im-time"><b>Bridge + Hook</b> · 8:03 AM</span>
+    <div class="bubble you"><span>Makes sense, super common man. That's exactly why we focus not on leads, but on pre-qualified quotes booked into your calendar, so you've just got quotes to show up to each week.</span></div>
+    <div class="bubble you tail" style="margin-top:2px"><span>If we could get you a steady 4 to 6 extra qualified quotes a month and take the chasing and time wasters off your plate, is that something you'd be keen to look at?</span></div>
+    <div class="bubble them tail gap"><span>Yeah keen. How much is it?</span></div>
+
+    <span class="im-time"><b>Book</b> · 8:10 AM</span>
+    <div class="bubble you tail"><span>Can definitely go through price, it depends on what you need. Best thing from here is I send you a doc that lays out exactly how we do it, with examples from similar businesses and an idea of pricing. Then we jump on a quick call. Does Thursday at 2pm or Friday at 10am suit better?</span></div>
+    <div class="bubble them tail gap"><span>Thursday arvo is good</span></div>
+    <div class="bubble you gap"><span>Sweet, locked in for 2pm Thursday 👍</span></div>
+    <div class="bubble you" style="margin-top:2px"><span>Here's the doc, plus a concreter in Mornington who went from up and down to $250k in 6 weeks. Have a look before Thursday</span></div>
+    <div class="bubble you tail" style="margin-top:2px"><span>I'll give you a ring then, I'll flick you a text from my phone beforehand so you know who's calling</span></div>
+    <div class="bubble them tail gap"><span>Legend cheers</span></div>
+  </div>
+  <div class="im-input" aria-hidden="true"><span class="im-plus">+</span><span class="im-field">iMessage</span></div>
+</div>
+
+<!-- LOG -->
+<div class="card">
+  <h3>Log It</h3>
+  <p class="when">After every conversation, record:</p>
+  <ul class="log">
+    <li>Opener used: new enquiry / cold / booked out / spot open / similar win / season ahead</li>
+    <li>Goal: consistency / expansion (more staff, new niche, right jobs)</li>
+    <li>Jobs a month now vs wanted: __________</li>
+    <li>Who chases enquiries now: __________</li>
+    <li>Call booked: day &amp; time __________</li>
+    <li>Proof sent: __________</li>
+  </ul>
+</div>
+
+<footer>Booked Trades · DM outbound for Bon. Open, goal, gap, bridge, hook, book, feed proof.</footer>
+</div>
+
+<script>
+document.querySelectorAll('.copy').forEach(function(btn){
+  btn.addEventListener('click',function(){
+    var p=btn.parentElement.querySelector('p');
+    var text=p.textContent.replace(/^"|"$/g,'');
+    var done=function(){btn.textContent='Copied';setTimeout(function(){btn.textContent='Copy'},1400)};
+    var fallback=function(){var r=document.createRange();r.selectNodeContents(p);var s=window.getSelection();s.removeAllRanges();s.addRange(r);btn.textContent='Selected'};
+    try{navigator.clipboard.writeText(text).then(done,fallback)}catch(e){fallback()}
+  });
+});
+</script>
